@@ -1,4 +1,4 @@
-"Program do przechowywania obrazów"
+   "Program do przechowywania obrazów"
 
 FORK repozytorium
  
