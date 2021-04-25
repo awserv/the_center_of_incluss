@@ -1,0 +1,31 @@
+---
+
+image: docker:latest
+
+services:
+  - docker:dind
+build:
+ stage: build
+ script:
+  - docker build -t send .
+  - docker tag send awserv/firefox:14.02
+  - docker login -u "awserv" -p "$DOCKER_HUB"
+  - docker push awserv/firefox:14.02
+ only:
+    changes:
+     - .gitlab-ci.yml
+     - Dockerfile
+     - README.md
+     - app/*
+
+# stage: conect server_A
+before_script:
+ - 'command -v ssh-agent >/dev/null || ( apt- update -y && apt- install openssh-client -y apt install docker.io -y )'
+ - eval $(ssh-agent -s)
+ - docker version && docker info
+ - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add -
+ - mkdir -p ~/.ssh
+ - chmod 700 ~/.ssh
+ - ssh -o StrictHostKeyChecking=no ubuntu@3.66.215.80 "cd ~; echo 'start cicd' >> gitlab.txt"
+ - docker pull awserv/firefox:14.02
+ - docker run --publish 80:1443 -d awserv/firefox:14.02
