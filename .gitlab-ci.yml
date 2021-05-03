@@ -2,6 +2,10 @@
 
 image: docker:latest
 
+stages:
+  - build
+  - push
+
 services:
   - docker:dind
 build:
@@ -19,13 +23,15 @@ build:
      - app/*
 
 # stage: conect server_A
-after_script:
- - 'command -v ssh-agent >/dev/null || ( apt- update -y && apt- install openssh-client -y apt install docker.io -y )'
- - eval $(ssh-agent -s)
- - docker version && docker info
- - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add -
- - mkdir -p ~/.ssh
- - chmod 700 ~/.ssh
- - ssh -o StrictHostKeyChecking=no ubuntu@3.66.215.80 "cd ~; echo 'start cicd' >> gitlab.txt"
- - docker pull awserv/firefox:14.02
- - docker run --publish 80:1443 -d awserv/firefox:14.02
+push:
+  stage: push
+  needs: # пока предыщая не вып это не заработает
+    - job: build
+  script:
+    - 'command -v ssh-agent >/dev/null || ( apt- update -y && apt- install openssh-client -y apt install docker.io -y )'
+    - eval $(ssh-agent -s)
+    - docker version && docker info
+    - echo "${SSH_PRIVATE_KEY}" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh -o StrictHostKeyChecking=no ubuntu@localhost "docker pull awserv/firefox:14.02 && docker run -p 1443:80 -d awserv/firefox:14.02"
